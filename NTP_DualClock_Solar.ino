@@ -43,7 +43,7 @@
 #include <ESP8266HTTPClient.h>
 #endif
 #include <WiFiClient.h>
-#include <UserSettings.h>
+#include "serSettings.h"
 
 #define TITLE "NTP TIME"
 #define NTP_SERVER "pool.ntp.org"                         // time.nist.gov, pool.ntp.org, etc
