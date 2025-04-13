@@ -28,7 +28,7 @@
                 02/07/21  added day-above-month option
                 02/10/21  added date-leading-zero option
 
-                12/04/25  added solar weather data to display - rkincaid/CalQRP Club 
+                04/13/25  added solar weather data to display - rkincaid/CalQRP Club 
                           thank you N0NBH and hamqsl.com for providing this service       
  **************************************************************************/
 
