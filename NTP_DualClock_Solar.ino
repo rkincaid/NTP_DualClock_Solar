@@ -43,7 +43,7 @@
 #include <ESP8266HTTPClient.h>
 #endif
 #include <WiFiClient.h>
-#include "serSettings.h"
+#include "UserSettings.h"
 
 #define TITLE "NTP TIME"
 #define NTP_SERVER "pool.ntp.org"                         // time.nist.gov, pool.ntp.org, etc
@@ -180,7 +180,8 @@ void showDate(time_t t, int x, int y) {
 void showTimeZone(int x, int y) {
   const int f = 4;                                 // text font
   tft.setTextColor(LABEL_FGCOLOR, LABEL_BGCOLOR);  // set text colors
-  tft.fillRect(x, y, 80, 28, LABEL_BGCOLOR);       // erase previous TZ
+  //tft.fillRect(x, y, 80, 28, LABEL_BGCOLOR);       // erase previous TZ
+                                                   // why? can't change TZ at run time
   if (!useLocalTime)
     tft.drawString("UTC", x, y, f);  // UTC time
   else
@@ -292,7 +293,7 @@ void blink(int count = 1) {          // diagnostic LED blink
  * use indexof to find the tag locations and pull out
  * the value with substring.
 */
-String getSW(String xml, String tag) {
+String getXmlData(String xml, String tag) {
   int i = xml.indexOf("<" + tag + ">");
   int j = xml.indexOf("</" + tag + ">");
   if (i > 0 && j > i && j < xml.length()) {
@@ -329,9 +330,9 @@ void getSolarData() {
     Serial.println(httpResponseCode);
     String payload = http.getString();  // get the XML
     //Serial.println(payload);
-    String sflux = getSW(payload, "solarflux");  // find the solar flux
-    String kindx = getSW(payload, "kindex");     // find the k index
-    String aindx = getSW(payload, "aindex");     // find the aindex
+    String sflux = getXmlData(payload, "solarflux");  // find the solar flux
+    String kindx = getXmlData(payload, "kindex");     // find the k index
+    String aindx = getXmlData(payload, "aindex");     // find the aindex
     sprintf(solar_cond, "SFI: %s  A: %s  K: %s", sflux, aindx, kindx);
   } else {
     Serial.print("Error code: ");      // print the response code to the console
