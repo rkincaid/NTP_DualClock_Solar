@@ -8,7 +8,8 @@ The following changes were made to Burce Hall's original implementation:
 
 - I moved the #defines for your wifi network to a separate include file. This enable easier
 updating of the github repo as while I'm testing code with my credentials I can just commit
-changes to the main file without constantly editing credentials.
+changes to the main file without constantly editing credentials. Make sure this include
+file is in the same directory as the main .ino file.
 
 - Of course I also added the solar data.
 
