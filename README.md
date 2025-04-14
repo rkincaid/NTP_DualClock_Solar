@@ -11,6 +11,9 @@ updating of the github repo as while I'm testing code with my credentials I can 
 changes to the main file without constantly editing credentials. Make sure this include
 file is in the same directory as the main .ino file.
 
+- There are new library depedencies. You will need to add:
+ESP8266HTTPClient.h
+
 - Of course I also added the solar data.
 
 A few details about how the solar data is obtained: When you first start the clock the code 
