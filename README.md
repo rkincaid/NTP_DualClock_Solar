@@ -11,15 +11,18 @@ updating of the github repo as while I'm testing code with my credentials I can 
 changes to the main file without constantly editing credentials. Make sure this include
 file is in the same directory as the main .ino file.
 
-- There are new library depedencies. You will need to add ESP8266HTTPClient:
-https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPClient
+- There are new library depedencies. You will need to add ESP8266HTTPClient:<BR>
+https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPClient<BR>
 It's also available to add from the IDE Library UI.
 
 - Of course I also added the solar data.
 
+NOTE: I can only test the 8266 version. But I added the corresponding HTTPCLient to the ESP32 option.
+It should work ok, but just be aware it hasn't been tested or even compiled for ESP32.
+
 A few details about how the solar data is obtained: When you first start the clock the code 
 takes the current second and uses a simple
-heuristic to construct a mostly random second. The the second modulo 5 is used to generate
+heuristic to construct a mostly random second based on when you started the app. The the second modulo 5 is used to generate
 a corresponding minute. This minute is further incremented by 1 to start 1 minute after the hour.
 Why all this fuss? The SFI is presuably changed on the hour so we want to start a bit later than that.
 Further if more than one of us uses this code we don't want to all try to grab the data at the same
