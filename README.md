@@ -11,8 +11,9 @@ updating of the github repo as while I'm testing code with my credentials I can 
 changes to the main file without constantly editing credentials. Make sure this include
 file is in the same directory as the main .ino file.
 
-- There are new library depedencies. You will need to add:
-ESP8266HTTPClient.h
+- There are new library depedencies. You will need to add ESP8266HTTPClient:
+https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPClient
+It's also available to add from the IDE Library UI.
 
 - Of course I also added the solar data.
 
