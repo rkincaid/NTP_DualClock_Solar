@@ -36,13 +36,12 @@
 #include <TFT_eSPI.h>  // https://github.com/Bodmer/TFT_eSPI
 #include <ezTime.h>    // https://github.com/ropg/ezTime
 #if defined(ESP32)
-#include <WiFi.h>  // use this WiFi lib for ESP32, or
-#include <WiFiClient.h>
+#include <WiFi.h>        // use this WiFi lib for ESP32, or
+#include <HTTPClient.h>  // NOTE: I've only tested the 8266 version
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>  // use this WiFi lib for ESP8266
 #include <ESP8266HTTPClient.h>
 #endif
-#include <WiFiClient.h>
 #include "UserSettings.h"
 
 #define TITLE "NTP TIME"
@@ -78,7 +77,7 @@ time_t t, oldT;                                      // current & displayed UTC
 time_t lt, oldLt;                                    // current & displayed local time
 bool useLocalTime = false;                           // temp flag used for display updates
 char* solar_cond = (char*)calloc(32, sizeof(char));  // buffer to hold space weather info
-int solar_min = 1;                                   // the minute each hour we'll update
+int solar_min = 31;                                  // the minute each hour we'll update
 int solar_sec = 0;                                   // the second each hour we'll update
 // you need the figerprint below to make an https connection to hamqsl
 // if it fails check the certificate on hamqsl (URL above) to see if it changed
@@ -116,12 +115,12 @@ void showClockStatus() {
  */
 
 void showAMPM(int hr, int x, int y) {
-  char ampm;                         // Will be either 'A' or 'P'
-  if (hr <= 11)                      // If the hour is 11 or less
-    ampm = 'A';                      // It's morning
-  else                               // Otherwise,
-    ampm = 'P';                      // It's afternoon
-  tft.drawChar(ampm, x+2, y - 10, 4);  // Show AM/PM indicator
+  char ampm;                             // Will be either 'A' or 'P'
+  if (hr <= 11)                          // If the hour is 11 or less
+    ampm = 'A';                          // It's morning
+  else                                   // Otherwise,
+    ampm = 'P';                          // It's afternoon
+  tft.drawChar(ampm, x + 2, y - 10, 4);  // Show AM/PM indicator
   tft.drawChar('M', x, y + 10, 4);
 }
 
@@ -181,7 +180,7 @@ void showTimeZone(int x, int y) {
   const int f = 4;                                 // text font
   tft.setTextColor(LABEL_FGCOLOR, LABEL_BGCOLOR);  // set text colors
   //tft.fillRect(x, y, 80, 28, LABEL_BGCOLOR);       // erase previous TZ
-                                                   // why? can't change TZ at run time
+  // why? can't TZ at run time
   if (!useLocalTime)
     tft.drawString("UTC", x, y, f);  // UTC time
   else
@@ -210,7 +209,7 @@ void updateDisplay() {
     oldLt = lt;  // remember currently displayed time
 
     // get solar data first time or on the hour at solar_min
-    if ((minute(t) == solar_min && second(t) == solar_sec) || *solar_cond == 0) {
+    if (((minute(t) == solar_min) && second(t) == solar_sec) || *solar_cond == 0) {
       tft.setTextColor(LABEL_BGCOLOR, LABEL_BGCOLOR);  // set label colors
       tft.drawString(solar_cond, 80, 130, 4);          // clear previous data
       getSolarData();
@@ -272,7 +271,7 @@ void printTime() {            // print time to serial port
     Serial.println(dateTime(TIME_FORMAT));  // option 1: print UTC time
   else
     Serial.println(local.dateTime(TIME_FORMAT));  // option 2: print local time
-  Serial.println();
+  //Serial.println();
 }
 
 void blink(int count = 1) {          // diagnostic LED blink
@@ -325,18 +324,22 @@ void getSolarData() {
   http.begin(client, SW_URL);              // open the URL connection
   int httpResponseCode = http.GET();       // get the response code
   sprintf(solar_cond, "*** no data ***");  // init the report in case if fails
-  if (httpResponseCode > 0) {              // if we got a response try to use it
-    Serial.print("HTTP Response code: ");
-    Serial.println(httpResponseCode);
-    String payload = http.getString();  // get the XML
-    //Serial.println(payload);
-    String sflux = getXmlData(payload, "solarflux");  // find the solar flux
-    String kindx = getXmlData(payload, "kindex");     // find the k index
-    String aindx = getXmlData(payload, "aindex");     // find the aindex
-    sprintf(solar_cond, "SFI: %s  A: %s  K: %s", sflux, aindx, kindx);
-  } else {
-    Serial.print("Error code: ");      // print the response code to the console
-    Serial.println(httpResponseCode);  // if something goes wrong
+  for (int i = 0; i < 5; ++i) {            // try up to 5 times
+    if (httpResponseCode > 0) {            // if we got a response try to use it
+      Serial.print("HTTP Response code: ");
+      Serial.println(httpResponseCode);
+      String payload = http.getString();  // get the XML
+      //Serial.println(payload);
+      String sflux = getXmlData(payload, "solarflux");  // find the solar flux
+      String kindx = getXmlData(payload, "kindex");     // find the k index
+      String aindx = getXmlData(payload, "aindex");     // find the aindex
+      sprintf(solar_cond, "SFI: %s  A: %s  K: %s", sflux, aindx, kindx);
+      break;  // ok we're good, don't retry
+    } else {
+      Serial.print("Error code: ");      // print the response code to the console
+      Serial.println(httpResponseCode);  // if something goes wrong
+    }
+    delay(100);
   }
   // Free resources
   http.end();
@@ -356,12 +359,12 @@ void setup() {
   showConnectionProgress();             // WiFi and NTP may take time
   local.setPosix(TZ_RULE);              // estab. local TZ by rule
   newDualScreen();                      // show title & labels
-  *solar_cond = 0;                      // initialize the conition buffer
+  *solar_cond = 0;                      // initialize the conition buffer to be a null string
   solar_sec = second(local.now());      // we'll poll on this second as pseudo random
-  solar_min = solar_sec % 5+1;          // we'll poll some time in the first 5 minutes
-                                        // this is to spread out other clocks for load
-                                        // balancing. You can comment this out and it
-                                        // will just do minute 0 and second 0
+  solar_min = (solar_sec) % 5 + 32;     // we'll poll some time in the first 5 minutes 
+                                        // or so after the half hour.
+                                        // This is to spread out other clocks for load
+                                        // balancing. 
 }
 
 void loop() {
