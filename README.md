@@ -1,4 +1,6 @@
 # NTP Dual Clock with Solar Conditions
+![clock](https://github.com/user-attachments/assets/80a8f562-dbaf-465e-a5ba-e5a1471ea3c2)
+
 This is a modified version of ESP-8266 sketch for Bruce Hall's NTP Clock architecture. 
 The sketch in this project is designed for a kit project of the CalQRP Club (calqrp.groups.io). 
 It adds the current solar flux, A-index and K-index as provided by hamqsl.com's XML service.
