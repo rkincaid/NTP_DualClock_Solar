@@ -32,11 +32,10 @@ By spreading out individual instances to semi-random time slots slots I hope to 
 request delays that might happen if a sufficient number of folks use this code and run it 24/7 and they all ask for
 the data at EXACTLY the same time. The whole point of NTP Clock is to get a syncronized time after all.
 
-
-So the bottom line is the code currently grabs the data once an hour on some point between minute 1 and minute 6.
-
 If you check the clock data with QRZ which displays the same hamqsl.com data, be aware that they update less frequently
-than hamqsl.com itself. So you may see temporary discrepencies with QRZ.com.
+than hamqsl.com itself. So you may see temporary discrepencies with QRZ.com. The same is true between hamqsl.com, QRZ 
+and the actual NOAA sources. Eventually, the clock will refresh with the appropriate solar data. I did try to optimize this
+as best I could.
 
 Good luck and 73
 Robert, AI6P
