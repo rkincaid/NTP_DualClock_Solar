@@ -1,4 +1,4 @@
-/**************************************************************************
+  /**************************************************************************
        Title:   NTP Dual Clock
       Author:   Bruce E. Hall, w8bh.net
         Date:   13 Feb 2021
@@ -77,7 +77,7 @@ time_t t, oldT;                                      // current & displayed UTC
 time_t lt, oldLt;                                    // current & displayed local time
 bool useLocalTime = false;                           // temp flag used for display updates
 char* solar_cond = (char*)calloc(32, sizeof(char));  // buffer to hold space weather info
-int solar_min = 31;                                  // the minute each hour we'll update
+int solar_min = 32;                                  // the minute each hour we'll update
 int solar_sec = 0;                                   // the second each hour we'll update
 // you need the figerprint below to make an https connection to hamqsl
 // if it fails check the certificate on hamqsl (URL above) to see if it changed
