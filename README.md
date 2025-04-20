@@ -29,7 +29,7 @@ heuristic to construct a mostly random second based on when you started the app.
 a corresponding minute. This minute is further incremented by 32 to update sometime after 2 minutes after the half hour (to give
 hamsql.com time to propogate any changes).
 Why all this fuss? After monitoring for some time, I determined
-that a few minutes after the 1/2 hour each hour was the best time to update hopefully catch the latest updates. 
+that a few minutes after the 1/2 hour each hour was the best time to update in order to hopefully catch the latest data. 
 By spreading out individual instances to semi-random time slots slots I hope to avoid any issues or
 request delays that might happen if a sufficient number of folks use this code and run it 24/7 and they all ask for
 the data at EXACTLY the same time. The whole point of NTP Clock is to get a syncronized time after all.
