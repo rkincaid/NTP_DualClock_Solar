@@ -1,4 +1,4 @@
-  /**************************************************************************
+/**************************************************************************
        Title:   NTP Dual Clock
       Author:   Bruce E. Hall, w8bh.net
         Date:   13 Feb 2021
@@ -28,20 +28,24 @@
                 02/07/21  added day-above-month option
                 02/10/21  added date-leading-zero option
 
-                04/13/25  added solar weather data to display - rkincaid/CalQRP Club 
+                04/13/25  added solar weather data to display - AI6P /CalQRP Club 
                           thank you N0NBH and hamqsl.com for providing this service       
+                05/07/25  changed https authentication to be compatible with ESP32
+                          and John Price's PCB. Also added Geemagnetic Field text - AI6P
  **************************************************************************/
 
 
 #include <TFT_eSPI.h>  // https://github.com/Bodmer/TFT_eSPI
 #include <ezTime.h>    // https://github.com/ropg/ezTime
 #if defined(ESP32)
-#include <WiFi.h>        // use this WiFi lib for ESP32, or
-#include <HTTPClient.h>  // NOTE: I've only tested the 8266 version
+#include <HTTPClient.h>
+#include <WiFi.h>
 #elif defined(ESP8266)
-#include <ESP8266WiFi.h>  // use this WiFi lib for ESP8266
 #include <ESP8266HTTPClient.h>
+#include <ESP8266WiFi.h>
 #endif
+#include <WiFiClientSecure.h>
+
 #include "UserSettings.h"
 
 #define TITLE "NTP TIME"
@@ -71,18 +75,45 @@
 
 // ============ GLOBAL VARIABLES =====================================================
 
-TFT_eSPI tft = TFT_eSPI();                           // display object
-Timezone local;                                      // local timezone variable
-time_t t, oldT;                                      // current & displayed UTC
-time_t lt, oldLt;                                    // current & displayed local time
-bool useLocalTime = false;                           // temp flag used for display updates
-char* solar_cond = (char*)calloc(32, sizeof(char));  // buffer to hold space weather info
-int solar_min = 32;                                  // the minute each hour we'll update
-int solar_sec = 0;                                   // the second each hour we'll update
-// you need the figerprint below to make an https connection to hamqsl
-// if it fails check the certificate on hamqsl (URL above) to see if it changed
-const char fingerprint[] PROGMEM = "5F:BF:E7:E1:8C:48:3C:D5:EC:E1:FE:13:BE:D2:04:EA:BB:55:42:7F";
+TFT_eSPI tft = TFT_eSPI();                            // display object
+Timezone local;                                       // local timezone variable
+time_t t, oldT;                                       // current & displayed UTC
+time_t lt, oldLt;                                     // current & displayed local time
+bool useLocalTime = false;                            // temp flag used for display updates
+char* solar_cond = (char*)calloc(32, sizeof(char));   // buffer to hold space weather info
+char* solar_cond2 = (char*)calloc(32, sizeof(char));  // buffer to hold space weather info
+int solar_min = 32;                                   // the minute each hour we'll update
+int solar_sec = 0;                                    // the second each hour we'll update
 
+// hamqsl's root certificate needed to do https
+const char HQSL_Root_Cert[] PROGMEM = R"CERT(
+-----BEGIN CERTIFICATE-----
+MIID3TCCAsWgAwIBAgIBADANBgkqhkiG9w0BAQsFADCBjzELMAkGA1UEBhMCVVMx
+EDAOBgNVBAgTB0FyaXpvbmExEzARBgNVBAcTClNjb3R0c2RhbGUxJTAjBgNVBAoT
+HFN0YXJmaWVsZCBUZWNobm9sb2dpZXMsIEluYy4xMjAwBgNVBAMTKVN0YXJmaWVs
+ZCBSb290IENlcnRpZmljYXRlIEF1dGhvcml0eSAtIEcyMB4XDTA5MDkwMTAwMDAw
+MFoXDTM3MTIzMTIzNTk1OVowgY8xCzAJBgNVBAYTAlVTMRAwDgYDVQQIEwdBcml6
+b25hMRMwEQYDVQQHEwpTY290dHNkYWxlMSUwIwYDVQQKExxTdGFyZmllbGQgVGVj
+aG5vbG9naWVzLCBJbmMuMTIwMAYDVQQDEylTdGFyZmllbGQgUm9vdCBDZXJ0aWZp
+Y2F0ZSBBdXRob3JpdHkgLSBHMjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
+ggEBAL3twQP89o/8ArFvW59I2Z154qK3A2FWGMNHttfKPTUuiUP3oWmb3ooa/RMg
+nLRJdzIpVv257IzdIvpy3Cdhl+72WoTsbhm5iSzchFvVdPtrX8WJpRBSiUZV9Lh1
+HOZ/5FSuS/hVclcCGfgXcVnrHigHdMWdSL5stPSksPNkN3mSwOxGXn/hbVNMYq/N
+Hwtjuzqd+/x5AJhhdM8mgkBj87JyahkNmcrUDnXMN/uLicFZ8WJ/X7NfZTD4p7dN
+dloedl40wOiWVpmKs/B/pM293DIxfJHP4F8R+GuqSVzRmZTRouNjWwl2tVZi4Ut0
+HZbUJtQIBFnQmA4O5t78w+wfkPECAwEAAaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAO
+BgNVHQ8BAf8EBAMCAQYwHQYDVR0OBBYEFHwMMh+n2TB/xH1oo2Kooc6rB1snMA0G
+CSqGSIb3DQEBCwUAA4IBAQARWfolTwNvlJk7mh+ChTnUdgWUXuEok21iXQnCoKjU
+sHU48TRqneSfioYmUeYs0cYtbpUgSpIB7LiKZ3sx4mcujJUDJi5DnUox9g61DLu3
+4jd/IroAow57UvtruzvE03lRTs2Q9GcHGcg8RnoNAX3FWOdt5oUwF5okxBDgBPfg
+8n/Uqgr/Qh037ZTlZFkSIHc40zI+OIF1lnP6aI+xy84fxez6nH7PfrHxBy22/L/K
+pL/QlwVKvOoYKAKQvVR4CSFx09F9HdkWsKlhPdAKACL8x3vLCWRFCztAgfd9fDL1
+mMpYjn0q7pBZc2T5NnReJaH1ZgUufzkVqSr7UIuOhWn0
+-----END CERTIFICATE-----
+)CERT";
+#if defined(ESP8266)
+X509List cert(HQSL_Root_Cert);  // Make it a list for the API
+#endif
 
 // ============ DISPLAY ROUTINES =====================================================
 
@@ -195,6 +226,17 @@ void showTimeDate(time_t t, time_t oldT, bool hr12, int x, int y) {
     showDate(t, x + 250, y);               // update date
 }
 
+void setClock() {
+  time_t now = time(nullptr);
+  while (now < 8 * 3600 * 2) {  // Wait for the NTP time to be set
+    delay(500);
+    Serial.print(".");
+    now = time(nullptr);
+  }
+  struct tm timeinfo;
+  gmtime_r(&now, &timeinfo);
+}
+
 void updateDisplay() {
   t = now();                                             // check latest time
   if (t != oldT) {                                       // are we in a new second yet?
@@ -212,11 +254,15 @@ void updateDisplay() {
     if (((minute(t) == solar_min) && second(t) == solar_sec) || *solar_cond == 0) {
       tft.setTextColor(LABEL_BGCOLOR, LABEL_BGCOLOR);  // set label colors
       tft.drawString(solar_cond, 80, 130, 4);          // clear previous data
+      tft.drawCentreString(solar_cond2, 160, 4, 4);    // clear previous data
+      Serial.println(solar_cond2);
       getSolarData();
       tft.setTextColor(LABEL_FGCOLOR, LABEL_BGCOLOR);  // set label colors
       printTime();
       tft.drawString(solar_cond, 80, 130, 4);
+      tft.drawCentreString(solar_cond2, 160, 4, 4);
       Serial.println(solar_cond);
+      Serial.println(solar_cond2);
     }
   }
 }
@@ -229,7 +275,6 @@ void newDualScreen() {
   tft.drawCentreString(TITLE, 160, 4, 4);                 // show title at top
   tft.drawRoundRect(0, 0, 319, 110, 10, TFT_WHITE);       // draw edge around local time
   tft.drawRoundRect(0, 126, 319, 110, 10, TFT_WHITE);     // draw edge around UTC
-  //tft.drawString(sw_str,80,130,4);
 }
 
 void startupScreen() {
@@ -271,7 +316,6 @@ void printTime() {            // print time to serial port
     Serial.println(dateTime(TIME_FORMAT));  // option 1: print UTC time
   else
     Serial.println(local.dateTime(TIME_FORMAT));  // option 2: print local time
-  //Serial.println();
 }
 
 void blink(int count = 1) {          // diagnostic LED blink
@@ -319,21 +363,31 @@ String getXmlData(String xml, String tag) {
  */
 void getSolarData() {
   WiFiClientSecure client;
-  HTTPClient http;
-  client.setFingerprint(fingerprint);      // set the HTTPS fingerprint
-  http.begin(client, SW_URL);              // open the URL connection
-  int httpResponseCode = http.GET();       // get the response code
+  HTTPClient https;
+
+#if defined(ESP32)
+  client.setCACert(HQSL_Root_Cert);
+#elif defined(ESP8266)
+  client.setTrustAnchors(&cert);  // load the cert
+#endif
+  bool connected = https.begin(client, SW_URL);  // open the URL connection
+  if (connected) Serial.print("connected\n");
+  int httpResponseCode = https.GET();  // get the response code
+  Serial.println(httpResponseCode);
   sprintf(solar_cond, "*** no data ***");  // init the report in case if fails
   for (int i = 0; i < 5; ++i) {            // try up to 5 times
     if (httpResponseCode > 0) {            // if we got a response try to use it
       Serial.print("HTTP Response code: ");
       Serial.println(httpResponseCode);
-      String payload = http.getString();  // get the XML
+      String payload = https.getString();  // get the XML
       //Serial.println(payload);
       String sflux = getXmlData(payload, "solarflux");  // find the solar flux
       String kindx = getXmlData(payload, "kindex");     // find the k index
       String aindx = getXmlData(payload, "aindex");     // find the aindex
+      String gmf = getXmlData(payload, "geomagfield");
+      String s2n = getXmlData(payload, "signalnoise");
       sprintf(solar_cond, "SFI: %s  A: %s  K: %s", sflux, aindx, kindx);
+      sprintf(solar_cond2, "%s", gmf);
       break;  // ok we're good, don't retry
     } else {
       Serial.print("Error code: ");      // print the response code to the console
@@ -342,7 +396,7 @@ void getSolarData() {
     delay(100);
   }
   // Free resources
-  http.end();
+  https.end();
 }
 
 // ============ MAIN PROGRAM ===================================================
@@ -351,20 +405,26 @@ void setup() {
   tft.init();                           // initialize LCD screen object
   tft.setRotation(SCREEN_ORIENTATION);  // landscape screen orientation
   startupScreen();                      // show title
-  blink(3);                             // show sketch is starting
+  //The blink code isn't compatible with John Price's ESP32 board
+  //since it isn't required I've commented it out. If you are using
+  //one of Bruce's boards and/or the CalQRP board you can put it back
+  //in if you want - AI6P
+  //blink(3);                             // show sketch is starting
   Serial.begin(BAUDRATE);               // open serial port
   setDebug(DEBUGLEVEL);                 // enable NTP debug info
   setServer(NTP_SERVER);                // set NTP server
   WiFi.begin(WIFI_SSID, WIFI_PWD);      // start WiFi
   showConnectionProgress();             // WiFi and NTP may take time
   local.setPosix(TZ_RULE);              // estab. local TZ by rule
+  configTime(0, 0, "pool.ntp.org");     // needed for https - why? (also timezone doesn't matter here)
   newDualScreen();                      // show title & labels
-  *solar_cond = 0;                      // initialize the conition buffer to be a null string
+  *solar_cond = 0;                      // initialize the condition buffer to be a null string
+  strcpy(solar_cond2, TITLE);           // initialize 2nd condition to start with the title
   solar_sec = second(local.now());      // we'll poll on this second as pseudo random
-  solar_min = (solar_sec) % 5 + 32;     // we'll poll some time in the first 5 minutes 
+  solar_min = (solar_sec) % 5 + 32;     // we'll poll some time in the first 5 minutes
                                         // or so after the half hour.
                                         // This is to spread out other clocks for load
-                                        // balancing. 
+                                        // balancing.
 }
 
 void loop() {
