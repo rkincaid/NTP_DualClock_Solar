@@ -20,8 +20,7 @@ It's also available to add from the IDE Library UI.
 - Of course I also added the solar data. This data comes from [hamqsl.com](https://www.hamqsl.com/solarxml.php)
 and is the same source used by many websites including QRZ.com.
 
-NOTE: I can only test the 8266 version. But I added the corresponding HTTPCLient to the ESP32 option.
-It should work ok, but just be aware it hasn't been tested or even compiled for ESP32.
+**NOTE: This has been verified to work on the CalQRP kit using an ESP8266. It does not function properly on an ESP32.**
 
 A few details about how the solar data is obtained: When you first start the clock the code 
 takes the current second and uses a simple
