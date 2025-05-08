@@ -1,5 +1,5 @@
 # NTP Dual Clock with Solar Conditions
-![clock](https://github.com/user-attachments/assets/80a8f562-dbaf-465e-a5ba-e5a1471ea3c2)
+![image](https://github.com/user-attachments/assets/5e51f175-e064-4b67-95a2-e13680797d09)
 
 This is a modified version of ESP-8266 sketch for Bruce Hall's NTP Clock architecture. 
 The sketch in this project is designed for a kit project of the CalQRP Club (calqrp.groups.io). 
@@ -20,8 +20,10 @@ It's also available to add from the IDE Library UI.
 - Of course I also added the solar data. This data comes from [hamqsl.com](https://www.hamqsl.com/solarxml.php)
 and is the same source used by many websites including QRZ.com.
 
-NOTE: I can only test the 8266 version. But I added the corresponding HTTPCLient to the ESP32 option.
-It should work ok, but just be aware it hasn't been tested or even compiled for ESP32.
+- **This version HAS been modified to work properly with the ESP32** and
+should work ok. This is true even for John Price's PCB (different from the CalQRP board).
+
+- This version also includes the text for **Geomagnetic Field** which is shown on the upper clock (see photo above)
 
 A few details about how the solar data is obtained: When you first start the clock the code 
 takes the current second and uses a simple
