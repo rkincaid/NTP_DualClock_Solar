@@ -22,6 +22,7 @@ and is the same source used by many websites including QRZ.com.
 
 - **This version HAS been modified to work properly with the ESP32** and
 should work ok. This is true even for John Price's PCB (different from the CalQRP board).
+Thanks to John (WA2FZW) for working with me on debugging the port to his board.
 
 - This version also includes the text for **Geomagnetic Field** which is shown on the upper clock (see photo above)
 
