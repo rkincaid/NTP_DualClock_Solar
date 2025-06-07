@@ -375,7 +375,7 @@ void getSolarData() {
   int httpResponseCode = https.GET();  // get the response code
   Serial.println(httpResponseCode);
   sprintf(solar_cond, "*** no data ***");  // init the report in case if fails
-  for (int i = 0; i < 5; ++i) {            // try up to 5 times
+  for (int i = 0; i < 10; ++i) {            // try up to 5 times
     if (httpResponseCode > 0) {            // if we got a response try to use it
       Serial.print("HTTP Response code: ");
       Serial.println(httpResponseCode);
@@ -393,7 +393,7 @@ void getSolarData() {
       Serial.print("Error code: ");      // print the response code to the console
       Serial.println(httpResponseCode);  // if something goes wrong
     }
-    delay(100);
+    delay(1000);
   }
   // Free resources
   https.end();
