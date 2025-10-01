@@ -81,7 +81,7 @@ int solar_min = 32;                                  // the minute each hour we'
 int solar_sec = 0;                                   // the second each hour we'll update
 // you need the figerprint below to make an https connection to hamqsl
 // if it fails check the certificate on hamqsl (URL above) to see if it changed
-const char fingerprint[] PROGMEM = "9F:E6:07:3E:9E:59:09:67:06:6F:F0:E1:2B:34:B1:55:3F:7D:86:4E";
+const char fingerprint[] PROGMEM = "8E:BB:BD:73:74:D0:48:67:67:3A:AB:C8:5E:61:72:CE:30:1B:C9:56";
 
 
 // ============ DISPLAY ROUTINES =====================================================
